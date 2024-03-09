@@ -58,27 +58,21 @@
     <div class="text"></div>
     <div id="drop-zone"></div>
 
-    <script>
-        var ws = new WebSocket('ws://connect.iot-websocket.kro.kr:1241');  // WebSocket 서버의 주소를 입력하세요.
+   <script>
+    var ws; // 웹소켓 변수 선언
 
- document.body.addEventListener('click', function() {
-        var message = prompt();
-        
-        if(message) { // 메시지가 비어있지 않은 경우에만 전송
-            ws.send(message);
-        }
-    });
-	
-       ws.onopen = function() {
-    console.log('서버와 연결되었습니다.');
-};
+    // 웹소켓 연결 함수
+    function connectWebSocket() {
+        ws = new WebSocket('ws://connect.iot-websocket.kro.kr:1241'); // WebSocket 서버 주소
 
+        ws.onopen = function() {
+            console.log('서버와 연결되었습니다.');
+        };
 
         ws.onmessage = function(event) {
             var logEntry = document.createElement('div');
             logEntry.classList.add('log-entry');
             logEntry.textContent = event.data;
-
             document.querySelector('.text').appendChild(logEntry);
         };
 
@@ -88,40 +82,51 @@
 
         ws.onclose = function() {
             console.log('WebSocket 연결이 닫혔습니다.');
+            // 연결이 닫힌 후 자동으로 재연결 시도
+            setTimeout(connectWebSocket, 5000); // 5초 후 재연결 시도
         };
-		
-		//
-		(function() {
-    var oldLog = console.log;
-    var oldError = console.error;
-    var oldWarn = console.warn;
-
-    console.log = function(message) {
-        oldLog.apply(console, arguments);
-        logToPage('prompt', message);
-    };
-
-    console.error = function(message) {
-        oldError.apply(console, arguments);
-        logToPage('F00', message);
-    };
-
-    console.warn = function(message) {
-        oldWarn.apply(console, arguments);
-        logToPage('progress', message);
-    };
-
-    function logToPage(type, message) {
-        var logEntry = document.createElement('div');
-        logEntry.classList.add('log-entry', type);
-        logEntry.textContent = message;
-
-        document.querySelector('.text').appendChild(logEntry);
     }
-})();
 
-//
-		
-    </script>
+    // 최초 웹소켓 연결 시도
+    connectWebSocket();
+
+    document.body.addEventListener('click', function() {
+        var message = prompt();
+        
+        if(message) { // 메시지가 비어있지 않은 경우에만 전송
+            ws.send(message);
+        }
+    });
+
+    (function() {
+        var oldLog = console.log;
+        var oldError = console.error;
+        var oldWarn = console.warn;
+
+        console.log = function(message) {
+            oldLog.apply(console, arguments);
+            logToPage('log', message); // 'prompt'를 'log'로 변경
+        };
+
+        console.error = function(message) {
+            oldError.apply(console, arguments);
+            logToPage('error', message); // 'F00'를 'error'로 변경
+        };
+
+        console.warn = function(message) {
+            oldWarn.apply(console, arguments);
+            logToPage('warn', message); // 'progress'를 'warn'로 변경
+        };
+
+        function logToPage(type, message) {
+            var logEntry = document.createElement('div');
+            logEntry.classList.add('log-entry', type);
+            logEntry.textContent = message;
+            document.querySelector('.text').appendChild(logEntry);
+        }
+    })();
+
+</script>
+
 </body>
 </html>
